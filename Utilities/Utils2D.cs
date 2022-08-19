@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -22,6 +23,23 @@ namespace Nebula
             {
                 return new Vector2(toChange.x * factor, toChange.y * factor);
             }
+        }
+
+        public static Texture2D LoadTextureFromFile(string filePath)
+        {
+            // Load a PNG or JPG file from disk to a Texture2D. Null if fails.
+            Texture2D texture;
+            byte[] fileData;
+
+            if (File.Exists(filePath))
+            {
+                fileData = File.ReadAllBytes(filePath);
+                texture = new Texture2D(0, 0);
+                // Set texture if readable. Sized Automatically.
+                if (texture.LoadImage(fileData))
+                    return texture;
+            }
+            return null;
         }
 
         public static void DisplayInfo(Transform transform, string message)
