@@ -23,6 +23,18 @@ namespace Nebula
             }
         }
 
+        public static Vector2 RotateVector2ByRad(Vector2 vector, float angle)
+        {
+            return new Vector2((vector.x * Mathf.Cos(angle)) - (Mathf.Sin(angle) * vector.y),
+                               (vector.x * Mathf.Sin(angle)) + (Mathf.Cos(angle) * vector.y));
+        }
+
+        public static Vector2 RotateVector2ByDeg(Vector2 vector, float angle)
+        {
+            angle *= Mathf.Deg2Rad;
+            return Utils2D.RotateVector2ByRad(angle);
+        }
+
         public static Texture2D LoadTextureFromFile(string filePath)
         {
             // Load a PNG or JPG file from disk to a Texture2D. Null if fails.

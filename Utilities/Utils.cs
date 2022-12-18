@@ -31,5 +31,10 @@ namespace Nebula
             // Destroy it after 1 physics call.
             GameObject.Destroy(canvasObject, Time.fixedDeltaTime);
         }
+
+        public static Vector3 RotateVector3ByDegInWorldCoordinates(Vector3 vector, Vector3 angles)
+        {
+            return Quaternion.Euler(angles.x, angles.y, angles.z) * vector;
+        }
     }
 }
