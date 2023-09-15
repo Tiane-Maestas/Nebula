@@ -1,5 +1,9 @@
+using System;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using TMPro;
+
 
 namespace Nebula
 {
@@ -35,6 +39,56 @@ namespace Nebula
         public static Vector3 RotateVector3ByDegInWorldCoordinates(Vector3 vector, Vector3 angles)
         {
             return Quaternion.Euler(angles.x, angles.y, angles.z) * vector;
+        }
+
+        // Type T must be marked as "[System.Serializable]".
+        public static void SerializedSave<T>(T saveData, string path) where T : class
+        {
+            BinaryFormatter formatter = new BinaryFormatter();
+
+            FileStream fileStream = new FileStream(path, FileMode.Create);
+
+            try
+            {
+                formatter.Serialize(fileStream, saveData);
+            }
+            catch (Exception e)
+            {
+                Debug.Log("File Stream Failed!");
+                Debug.Log(e);
+            }
+            fileStream.Close();
+        }
+
+        // Type T must be marked as "[System.Serializable]".
+        public static T LoadSerializedSave<T>(string path) where T : class
+        {
+            if (File.Exists(path))
+            {
+                BinaryFormatter formatter = new BinaryFormatter();
+                FileStream fileStream = new FileStream(path, FileMode.Open);
+
+                T loadedData = default(T);
+                try
+                {
+                    loadedData = formatter.Deserialize(fileStream) as T;
+                }
+                catch (Exception e)
+                {
+                    Debug.Log("File Stream Failed!");
+                    Debug.Log(e);
+                    fileStream.Close();
+                    return loadedData;
+                }
+                fileStream.Close();
+
+                return loadedData;
+            }
+            else
+            {
+                Debug.Log("No Save Found!");
+                return default(T); ;
+            }
         }
     }
 }

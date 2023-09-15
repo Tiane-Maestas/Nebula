@@ -32,7 +32,7 @@ namespace Nebula
         public static Vector2 RotateVector2ByDeg(Vector2 vector, float angle)
         {
             angle *= Mathf.Deg2Rad;
-            return Utils2D.RotateVector2ByRad(angle);
+            return Utils2D.RotateVector2ByRad(vector, angle);
         }
 
         public static Texture2D LoadTextureFromFile(string filePath)
