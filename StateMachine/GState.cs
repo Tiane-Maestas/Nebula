@@ -7,44 +7,46 @@ namespace Nebula
     public class GState
     {
         // Identifiers for the state machine and human's.
-        public int id { get; private set; }
-        public string name { get; private set; }
+        public int Id { get; private set; }
+        public string Name { get; private set; }
 
         // Allows for toggling of animations to play.
-        private string animatorBoolName;
-        private Animator animator;
+        private string _animatorBoolName;
+        private Animator _animator;
 
         // The time when the 'enter' method was last called.
-        public float startTime { get; private set; }
+        public float StartTime { get; private set; }
 
         // A list of 'id' to specify what transitions are allowed.
-        public List<int> allowedTransitions { get; private set; }
+        public List<int> AllowedTransitions { get; private set; }
 
         // In the case that multiple 'transitions' are allowed choose the one with
         // the highest priority.
-        public int priority { get; private set; }
+        public int Priority { get; private set; }
 
         public GState(int id, string name, List<int> allowedTransitions, int priority,
                       Animator animator, string animatorBoolName)
         {
-            this.id = id;
-            this.name = name;
-            this.allowedTransitions = allowedTransitions;
-            this.priority = priority;
-            this.animator = animator;
-            this.animatorBoolName = animatorBoolName;
+            this.Id = id;
+            this.Name = name;
+            this.AllowedTransitions = allowedTransitions;
+            this.Priority = priority;
+            _animator = animator;
+            _animatorBoolName = animatorBoolName;
         }
 
         public virtual void Enter()
         {
-            startTime = Time.time;
-            animator.SetBool(animatorBoolName, true);
+            StartTime = Time.time;
+            if (_animator != null)
+                _animator.SetBool(_animatorBoolName, true);
             // ToDo: Implement the logic that is performed once when entering a state
         }
 
         public virtual void Leave()
         {
-            animator.SetBool(animatorBoolName, false);
+            if (_animator != null)
+                _animator.SetBool(_animatorBoolName, false);
             // ToDo: Implement the logic that is performed once when leaving a state
         }
 

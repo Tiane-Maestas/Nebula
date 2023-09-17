@@ -6,64 +6,64 @@ namespace Nebula
 {
     public class GStateMachine
     {
-        List<GState> states;
+        private List<GState> _states;
 
-        GState currentState;
-        GState idleState;
+        private GState _currentState;
+        private GState _idleState;
 
         // Allows outside sources to lock state transitions
-        public bool transitionLock = false;
+        public bool TransitionLock = false;
 
         // Lock state transitions if a state was recently changed. This ensures that every state
         // will perform at least one action in a fixed update call.
-        private bool stateRecentlyChanged = false;
+        private bool _stateRecentlyChanged = false;
 
         public GStateMachine()
         {
-            states = new List<GState>();
+            _states = new List<GState>();
         }
 
         public void AddState(GState newState)
         {
-            states.Add(newState);
+            _states.Add(newState);
         }
 
         public void SetIdleState(GState newState)
         {
             this.AddState(newState);
-            this.idleState = newState;
-            currentState = newState;
-            currentState.Enter();
+            _idleState = newState;
+            _currentState = newState;
+            _currentState.Enter();
         }
 
         public void PerformStateAction()
         {
-            currentState.FixedUpdate();
-            stateRecentlyChanged = false;
+            _currentState.FixedUpdate();
+            _stateRecentlyChanged = false;
         }
 
         public int UpdateState()
         {
-            currentState.Update();
+            _currentState.Update();
 
             // In case a we want to lock the states from changing.
-            if (transitionLock || stateRecentlyChanged)
+            if (TransitionLock || _stateRecentlyChanged)
             {
-                return currentState.id;
+                return _currentState.Id;
             }
 
             // Handle Transitions
             // Only check the states that are allowed transitions from the current state.
-            foreach (int stateId in currentState.allowedTransitions)
+            foreach (int stateId in _currentState.AllowedTransitions)
             {
-                GState queryState = states[stateId];
+                GState queryState = _states[stateId];
                 if (queryState.Condition())
                 {
-                    if (!currentState.Condition())
+                    if (!_currentState.Condition())
                     {
                         ChangeStateTo(queryState);
                     }
-                    else if (queryState.priority > currentState.priority)
+                    else if (queryState.Priority > _currentState.Priority)
                     {
                         // Only use priorities if both state conditions are true.
                         ChangeStateTo(queryState);
@@ -74,20 +74,20 @@ namespace Nebula
             // Finally, if no transition state condition is met and the current state condition
             // isn't met set the current state to the idle state.
             // (Make this gradually go back using a graph at somepoint)
-            if (!currentState.Condition())
+            if (!_currentState.Condition())
             {
-                ChangeStateTo(idleState); // More of a fail safe currently.
+                ChangeStateTo(_idleState); // More of a fail safe currently.
             }
 
-            return currentState.id;
+            return _currentState.Id;
         }
 
         public void ChangeStateTo(GState newState)
         {
-            currentState.Leave();
-            currentState = newState;
-            currentState.Enter();
-            stateRecentlyChanged = true;
+            _currentState.Leave();
+            _currentState = newState;
+            _currentState.Enter();
+            _stateRecentlyChanged = true;
         }
     }
 }
