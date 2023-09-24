@@ -14,6 +14,12 @@ namespace Nebula
             private set { _list[i] = value; }
         }
 
+        public int Count
+        {
+            get { return _list.Count; }
+            private set { Count = value; }
+        }
+
         public RandomOrderList()
         {
             _list = new List<T>();
