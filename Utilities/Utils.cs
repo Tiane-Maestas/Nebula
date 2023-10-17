@@ -10,7 +10,7 @@ namespace Nebula
     public static class Utils
     {
         // Needs testing in 3D.
-        public static void DisplayInfo(Transform transform, string message)
+        public static void DisplayInfo(Transform transform, string message, float time = 0.0f)
         {
             // Create a canvas to put text onto at the transform passed in.
             GameObject canvasObject = new GameObject("Custom Canvas: " + message);
@@ -32,8 +32,10 @@ namespace Nebula
             text.fontSize = 4;
             text.sortingOrder = 1;
 
-            // Destroy it after 1 physics call.
-            GameObject.Destroy(canvasObject, Time.fixedDeltaTime);
+            if (time == 0.0f)
+                time = Time.fixedDeltaTime; // Destroy it after 1 physics call. 
+
+            GameObject.Destroy(canvasObject, time);
         }
 
         public static Vector3 RotateVector3ByDegInWorldCoordinates(Vector3 vector, Vector3 angles)
