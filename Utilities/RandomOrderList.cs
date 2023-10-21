@@ -11,7 +11,7 @@ namespace Nebula
         public T this[int i]
         {
             get { return _list[i]; }
-            private set { _list[i] = value; }
+            set { _list[i] = value; }
         }
 
         public int Count
@@ -44,6 +44,23 @@ namespace Nebula
                 _list[randomIndex] = _list[i];
                 _list[i] = temp;
             }
+        }
+
+        public override string ToString()
+        {
+            string result = "[";
+            for (int i = 0; i < _list.Count; i++)
+            {
+                if (i == _list.Count - 1)
+                {
+                    result += _list[i].ToString() + "]";
+                }
+                else
+                {
+                    result += _list[i].ToString() + ", ";
+                }
+            }
+            return result;
         }
     }
 }
