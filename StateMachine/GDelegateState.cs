@@ -9,19 +9,19 @@ namespace Nebula
         // Callback functions so that any general 'player controller' can create states
         // w/o having to change or add dependencies to itself or a GState.
         public delegate bool DelegatedCondition();
-        public DelegatedCondition condition;
+        private DelegatedCondition _condition;
 
         public delegate void DelegatedAction();
-        public DelegatedAction action;
+        private DelegatedAction _action;
 
         public delegate void DelegatedEnter();
-        public DelegatedEnter enter;
+        private DelegatedEnter _enter;
 
         public delegate void DelegatedLeave();
-        public DelegatedLeave leave;
+        private DelegatedLeave _leave;
 
         public delegate void DelegatedUpdate();
-        public DelegatedUpdate update;
+        private DelegatedUpdate _update;
 
         public GDelegateState(DelegatedCondition condition, DelegatedAction action,
                               DelegatedEnter enter, DelegatedLeave leave,
@@ -32,60 +32,60 @@ namespace Nebula
                               base(id, name, allowedTransitions, priority, animator,
                               animatorBoolName)
         {
-            this.condition = condition;
-            this.action = action;
-            this.enter = enter;
-            this.leave = leave;
-            this.update = update;
+            _condition = condition;
+            _action = action;
+            _enter = enter;
+            _leave = leave;
+            _update = update;
         }
 
         public override void Enter()
         {
             base.Enter();
             // Saftey Check. Not every component needs to be implemented.
-            if (enter == null)
+            if (_enter == null)
             {
                 return;
             }
-            enter();
+            _enter();
         }
 
         public override void Leave()
         {
             base.Leave();
             // Saftey Check. Not every component needs to be implemented.
-            if (leave == null)
+            if (_leave == null)
             {
                 return;
             }
-            leave();
+            _leave();
         }
 
         public override bool Condition()
         {
-            return condition();
+            return _condition();
         }
 
         public override void FixedUpdate()
         {
             base.FixedUpdate();
             // Saftey Check. Not every component needs to be implemented.
-            if (action == null)
+            if (_action == null)
             {
                 return;
             }
-            action();
+            _action();
         }
 
         public override void Update()
         {
             base.Update();
             // Saftey Check. Not every component needs to be implemented.
-            if (update == null)
+            if (_update == null)
             {
                 return;
             }
-            update();
+            _update();
         }
     }
 }
