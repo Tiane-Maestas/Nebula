@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Collections;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using TMPro;
@@ -9,8 +10,7 @@ namespace Nebula
 {
     public static class Utils
     {
-        // Needs testing in 3D.
-        public static void DisplayInfo(Transform transform, string message, float time = 0.0f)
+        public static void DisplayInfo(Transform transform, string message, float time = 0.0f, float floatRate = 0.0f) // Needs testing in 3D.
         {
             // Create a canvas to put text onto at the transform passed in.
             GameObject canvasObject = new GameObject("Custom Canvas: " + message);
@@ -34,6 +34,13 @@ namespace Nebula
 
             if (time == 0.0f)
                 time = Time.fixedDeltaTime; // Destroy it after 1 physics call. 
+
+            if (floatRate != 0.0f)
+            {
+                Rigidbody canvasBody = canvasObject.AddComponent<Rigidbody>();
+                canvasBody.useGravity = false;
+                canvasBody.velocity = new Vector3(0, floatRate, 0);
+            }
 
             GameObject.Destroy(canvasObject, time);
         }
