@@ -36,6 +36,7 @@ public class CameraController2D : MonoBehaviour
         switch (_cameraState)
         {
             case CameraState2D.LerpFollow:
+                if (!_lerpTarget) break;
                 _camera.transform.position = Vector3.Lerp(_camera.transform.position, _lerpTargetPosition, _defaultTransitionSpeed * Time.deltaTime);
                 _camera.orthographicSize = Mathf.Lerp(_camera.orthographicSize, _lerpOrthographicSize, _defaultTransitionSpeed * Time.deltaTime);
                 break;
