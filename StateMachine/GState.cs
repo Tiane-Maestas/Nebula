@@ -24,7 +24,7 @@ namespace Nebula
         // the highest priority.
         public int Priority { get; private set; }
 
-        public GState(int id, string name, List<int> allowedTransitions, int priority,
+        public GState(int id, int priority, List<int> allowedTransitions, string name,
                       Animator animator, string animatorBoolName)
         {
             this.Id = id;
@@ -65,5 +65,7 @@ namespace Nebula
         {
             // ToDo: Implement logic that this state needs to be checked every frame.
         }
+
+        public override string ToString() { return this.Name; }
     }
 }

@@ -15,8 +15,8 @@ public class CameraController2D : MonoBehaviour
     [SerializeField] private float _defaultTransitionSpeed;
 
     [Header("LerpFollow State")]
-    [SerializeField] private Transform _lerpTarget;
-    private Vector3 _lerpTargetPosition;
+    [SerializeField] private Transform _lerpTarget = null;
+    private Vector3 _lerpTargetPosition = new Vector3();
     [SerializeField] private float _lerpOrthographicSize;
 
     private void Awake()
@@ -27,8 +27,11 @@ public class CameraController2D : MonoBehaviour
     }
     private void Update()
     {
-        _lerpTargetPosition = _lerpTarget.position;
-        _lerpTargetPosition.z = _defaultPosition.z;
+        if (_lerpTarget)
+        {
+            _lerpTargetPosition = _lerpTarget.position;
+            _lerpTargetPosition.z = _defaultPosition.z;
+        }
 
         switch (_cameraState)
         {

@@ -22,15 +22,20 @@ namespace Nebula
 
         public delegate void DelegatedUpdate();
         private DelegatedUpdate _update;
-
-        public GDelegateState(DelegatedCondition condition, DelegatedAction action,
-                              DelegatedEnter enter, DelegatedLeave leave,
-                              DelegatedUpdate update,
-                              int id, string name, List<int> allowedTransitions,
-                              int priority, Animator animator, string animatorBoolName)
+        // Needs state ID, Condition, List of allowed transitions, priority, name
+        public GDelegateState(int id,
+                              int priority,
+                              List<int> allowedTransitions,
+                              DelegatedCondition condition,
+                              string name = "N/A",
+                              DelegatedAction action = null,
+                              DelegatedEnter enter = null,
+                              DelegatedLeave leave = null,
+                              DelegatedUpdate update = null,
+                              Animator animator = null,
+                              string animatorBoolName = "N/A")
                               :
-                              base(id, name, allowedTransitions, priority, animator,
-                              animatorBoolName)
+                              base(id, priority, allowedTransitions, name, animator, animatorBoolName)
         {
             _condition = condition;
             _action = action;
@@ -42,22 +47,14 @@ namespace Nebula
         public override void Enter()
         {
             base.Enter();
-            // Saftey Check. Not every component needs to be implemented.
-            if (_enter == null)
-            {
-                return;
-            }
+            if (_enter == null) return; // Saftey Check. Not every component needs to be implemented.
             _enter();
         }
 
         public override void Leave()
         {
             base.Leave();
-            // Saftey Check. Not every component needs to be implemented.
-            if (_leave == null)
-            {
-                return;
-            }
+            if (_leave == null) return; // Saftey Check. Not every component needs to be implemented.
             _leave();
         }
 
@@ -69,22 +66,14 @@ namespace Nebula
         public override void FixedUpdate()
         {
             base.FixedUpdate();
-            // Saftey Check. Not every component needs to be implemented.
-            if (_action == null)
-            {
-                return;
-            }
+            if (_action == null) return; // Saftey Check. Not every component needs to be implemented.
             _action();
         }
 
         public override void Update()
         {
             base.Update();
-            // Saftey Check. Not every component needs to be implemented.
-            if (_update == null)
-            {
-                return;
-            }
+            if (_update == null) return; // Saftey Check. Not every component needs to be implemented.
             _update();
         }
     }
