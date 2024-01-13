@@ -6,7 +6,7 @@ namespace Nebula
 {
     public class GStateMachine
     {
-        private List<GState> _states; // Todo: Change this to dictionary using state 'Id'.
+        private Dictionary<int, GState> _states; // Map of stateId to state.
 
         private GState _currentState;
         private GState _idleState;
@@ -20,12 +20,12 @@ namespace Nebula
 
         public GStateMachine()
         {
-            _states = new List<GState>();
+            _states = new Dictionary<int, GState>();
         }
 
         public void AddState(GState newState)
         {
-            _states.Add(newState);
+            _states.Add(newState.Id, newState);
         }
 
         public void SetIdleState(GState newState)
@@ -56,7 +56,7 @@ namespace Nebula
             // Only check the states that are allowed transitions from the current state.
             foreach (int stateId in _currentState.AllowedTransitions)
             {
-                GState queryState = _states[stateId]; // Todo: Make stateId different from state index.
+                GState queryState = _states[stateId];
                 if (queryState.Condition())
                 {
                     if (!_currentState.Condition())
