@@ -126,7 +126,7 @@ namespace Nebula
         {
             _slider.value = value;
 
-            if (Config.Text.Visible) _statText.text = "" + _slider.value;
+            if (Config.Text.Visible) _statText.text = "" + value; // I update with 'value' and not '_slider.value' to see if we are outside of range.
         }
     }
 }
