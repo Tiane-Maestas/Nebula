@@ -6,58 +6,58 @@ namespace Nebula
 {
     public class RandomOrderList<T> : IEnumerable
     {
-        private List<T> _list;
+        public List<T> List; // I made this public so I didn't have to wrap "OrderBy" method.
 
         public T this[int i]
         {
-            get { return _list[i]; }
-            set { _list[i] = value; }
+            get { return List[i]; }
+            set { List[i] = value; }
         }
 
         public int Count
         {
-            get { return _list.Count; }
+            get { return List.Count; }
             private set { Count = value; }
         }
 
         public RandomOrderList()
         {
-            _list = new List<T>();
+            List = new List<T>();
         }
 
         public void Add(T element)
         {
-            _list.Add(element);
+            List.Add(element);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return (IEnumerator)_list.GetEnumerator();
+            return (IEnumerator)List.GetEnumerator();
         }
 
         public void Shuffle()
         {
-            for (int i = 0; i < _list.Count; i++)
+            for (int i = 0; i < List.Count; i++)
             {
-                int randomIndex = Random.Range(0, _list.Count);
-                T temp = _list[randomIndex];
-                _list[randomIndex] = _list[i];
-                _list[i] = temp;
+                int randomIndex = Random.Range(0, List.Count);
+                T temp = List[randomIndex];
+                List[randomIndex] = List[i];
+                List[i] = temp;
             }
         }
 
         public override string ToString()
         {
             string result = "[";
-            for (int i = 0; i < _list.Count; i++)
+            for (int i = 0; i < List.Count; i++)
             {
-                if (i == _list.Count - 1)
+                if (i == List.Count - 1)
                 {
-                    result += _list[i].ToString() + "]";
+                    result += List[i].ToString() + "]";
                 }
                 else
                 {
-                    result += _list[i].ToString() + ", ";
+                    result += List[i].ToString() + ", ";
                 }
             }
             return result;
