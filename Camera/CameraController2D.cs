@@ -73,5 +73,26 @@ namespace Nebula
         public void LerpFollow(Transform lerpTarget) { _lerpTarget = lerpTarget; }
 
         public void MoveTo(Vector3 moveToTargetPosition, float size) { _moveToTargetPosition = moveToTargetPosition; _moveToOrthographicSize = size; }
+
+        public void Shake(float duration, float magnitude) { StartCoroutine(RandomShake(duration, magnitude)); }
+        private IEnumerator RandomShake(float duration, float magnitude)
+        {
+            Vector3 origPos = transform.localPosition;
+            float elapsedTime = 0.0f;
+
+            while (elapsedTime < duration)
+            {
+                float x = Random.Range(-1f, 1f) * magnitude;
+                float y = Random.Range(-1f, 1f) * magnitude;
+
+                Vector3 shakeAmount = new Vector3(x, y, 0);
+                transform.localPosition += shakeAmount;
+
+                elapsedTime += Time.deltaTime;
+                yield return null;
+            }
+
+            transform.localPosition = origPos;
+        }
     }
 }
