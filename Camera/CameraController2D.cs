@@ -82,17 +82,20 @@ namespace Nebula
 
             while (elapsedTime < duration)
             {
-                float x = Random.Range(-1f, 1f) * magnitude;
-                float y = Random.Range(-1f, 1f) * magnitude;
+                float offset = Random.Range(0, 1000);
+                // float x = Mathf.PerlinNoise(Random.Range(-1f, 1f) + offset, Random.Range(-1f, 1f) + offset);
+                // float y = Mathf.PerlinNoise(Random.Range(-1f, 1f) + offset, Random.Range(-1f, 1f) + offset);
+                // float sampleX = (Random.Range(0.0f, 1.0f) < 0.5f) ? -1.0f * x : x;
+                // float sampleY = (Random.Range(0.0f, 1.0f) < 0.5f) ? -1.0f * y : y;
+                float sampleX = Random.Range(-1f, 1f);
+                float sampleY = Random.Range(-1f, 1f);
 
-                Vector3 shakeAmount = new Vector3(x, y, 0);
-                transform.localPosition += shakeAmount;
+                Vector3 shakeAmount = new Vector3(sampleX, sampleY, 0);
+                transform.localPosition += shakeAmount * magnitude;
 
                 elapsedTime += Time.deltaTime;
                 yield return null;
             }
-
-            transform.localPosition = origPos;
         }
     }
 }
