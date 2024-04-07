@@ -17,18 +17,22 @@ namespace Nebula
         ConditionalBackground, // Same as 'background' but is frequently changed. (Ex. Player's own footsteps)
         ConditionalAmbient // Same as 'ambient' but will only play once. (Ex. Explosion)
     }
+
+    [System.Serializable]
     public struct Sound
     {
         public string name;
         public SoundType type;
         public string fileLocation;
+        public float volume;
         public float spacialBlend;
         public float maxAudibleDistance;
-        public Sound(string name, SoundType type, string fileLocation, float spacialBlend, float maxAudibleDistance)
+        public Sound(string name, SoundType type, string fileLocation, float volume, float spacialBlend, float maxAudibleDistance)
         {
             this.name = name;
             this.type = type;
             this.fileLocation = fileLocation;
+            this.volume = volume;
             this.spacialBlend = spacialBlend;
             this.maxAudibleDistance = maxAudibleDistance;
         }
@@ -53,7 +57,13 @@ namespace Nebula
 
         #region Data Handling
 
-        public static void AddSound(string name, SoundType type, string fileLocation, float maxAudibleDistance = 10, float spacialBlend = 1)
+        public static void LoadSoundConfiguration(SoundConfig config)
+        {
+            foreach (Sound sound in config.Sounds)
+                SoundManager.AddSound(sound.name, sound.type, sound.fileLocation, sound.volume, sound.maxAudibleDistance, sound.spacialBlend);
+        }
+
+        public static void AddSound(string name, SoundType type, string fileLocation, float volume, float maxAudibleDistance = 10, float spacialBlend = 1)
         {
             // Check for ambient.
             string ambientName = name + SoundManager.AmbientSuffix;
@@ -67,18 +77,18 @@ namespace Nebula
             if (Array.Exists(backgroundSoundTypes, element => element == type)) // All background types.
             {
                 // Make sure spacial blend here is 0 because it is of some background type. (Should always be heard)
-                sounds.Add(name, new Sound(name, type, fileLocation, 0, maxAudibleDistance));
+                sounds.Add(name, new Sound(name, type, fileLocation, volume, 0, maxAudibleDistance));
                 // Only create an audio source here if the sound is a background type becasue they only need one audio source.
                 CreateAudioSource(name, defaultSoundPosition);
             }
             else if (type == SoundType.Ambient)
             {
-                sounds.Add(ambientName, new Sound(name, type, fileLocation, spacialBlend, maxAudibleDistance));
+                sounds.Add(ambientName, new Sound(name, type, fileLocation, volume, spacialBlend, maxAudibleDistance));
                 ambientSoundsCounts[ambientName] = 0;
             }
             else
             {
-                sounds.Add(name, new Sound(name, type, fileLocation, spacialBlend, maxAudibleDistance));
+                sounds.Add(name, new Sound(name, type, fileLocation, volume, spacialBlend, maxAudibleDistance));
             }
         }
 
@@ -93,7 +103,7 @@ namespace Nebula
         private static SoundType[] backgroundSoundTypes = { SoundType.None, SoundType.Background, SoundType.ConditionalBackground };
 
         // This method is only for background type sounds because they don't depend on a location.
-        public static void PlaySound(string name, float volume = 1f)
+        public static void PlaySound(string name, float volumeMultiplier = 1.0f)
         {
             // Can't play a sound that doesn't exist.
             if (!sounds.ContainsKey(name))
@@ -106,7 +116,7 @@ namespace Nebula
             if (Array.Exists(backgroundSoundTypes, element => element == sounds[name].type))
             {
                 // Any sound of this type will already have an audio source constructed.
-                PlayAudioFromSource(name, volume);
+                PlayAudioFromSource(name, sounds[name].volume * volumeMultiplier);
                 return; // Successful exit of method here.
             }
             Debug.LogError($"SoundType with given name ({name}) isn't supported by this play type. Try including a position.");
@@ -119,7 +129,7 @@ namespace Nebula
         private static SoundType[] ambientSoundTypes = { SoundType.Ambient, SoundType.ConditionalAmbient };
 
         // This method is only for ambient type sounds because they depend on a location.
-        public static string PlaySound(string name, Vector3 position, float volume = 1f)
+        public static string PlaySound(string name, Vector3 position, float volumeMultiplier = 1.0f)
         {
             // Can't play a sound that doesn't exist.
             if (!sounds.ContainsKey(name))
@@ -142,7 +152,7 @@ namespace Nebula
             {
                 // Any sound of this type will need an audio source constructed.
                 name = CreateAudioSource(name, position);
-                PlayAudioFromSource(name, volume);
+                PlayAudioFromSource(name, sounds[name].volume * volumeMultiplier);
 
                 return name; // Successful exit of method here.
             }
@@ -171,7 +181,8 @@ namespace Nebula
                 return;
             }
 
-            audioPlayers[name].Stop();
+            if (audioPlayers[name] != null)
+                audioPlayers[name].Stop();
         }
 
         public static void StopSoundAndDestroyAudioPlayer(string name)
@@ -279,6 +290,7 @@ namespace Nebula
             // Construct Game Object
             GameObject soundGameObject = new GameObject($"AudioSource: {name}");
             soundGameObject.transform.position = position;
+            soundGameObject.AddComponent<DontDestroy>(); // Persist this game object accros scenes.
             AudioSource audioSource = soundGameObject.AddComponent<AudioSource>();
 
             // Whenever referencing 'sounds' make sure to use the ambient base name.
@@ -332,9 +344,10 @@ namespace Nebula
             audioPlayers[name].pitch = pitch;
         }
 
-        // Audio players should be cleared on scene unload. 
+        // Shouldn't really need to be used in new adaptation. If it gets used come back and re-think destroy. 
         public static void ClearAudioPlayersAndSounds()
         {
+            // Todo: Destory Game Objects?
             audioPlayers.Clear();
             sounds.Clear();
         }
