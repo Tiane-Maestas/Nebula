@@ -10,7 +10,7 @@ namespace Nebula
 {
     public static class Utils
     {
-        public static void DisplayInfo(Transform transform, string message, float time = 0.0f, float floatRate = 0.0f) // Needs testing in 3D.
+        public static void DisplayInfo(Transform transform, string message, float time = 0.0f, Vector3? offset = null, float floatRate = 0.0f) // Needs testing in 3D.
         {
             // Create a canvas to put text onto at the transform passed in.
             GameObject canvasObject = new GameObject("Custom Canvas: " + message);
@@ -20,6 +20,8 @@ namespace Nebula
             textCanvas.GetComponent<RectTransform>().localPosition = Vector3.zero;
             textCanvas.renderMode = RenderMode.WorldSpace;
             textCanvas.worldCamera = Camera.main;
+            if (offset != null)
+                textCanvas.gameObject.transform.position += (Vector3)offset;
 
             // Create text and place it in the canvas.
             GameObject textObject = new GameObject("Custom Text: " + message);
