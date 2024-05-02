@@ -23,18 +23,18 @@ namespace Nebula
         [SerializeField] private float _defaultTransitionTime;
         public AnimationCurve DefaultAnimationCurve;
 
-        [Header("'Follow' State (Follow a Target)")]
+        [Header("'Follow' State (Follow a Target using LERP)")]
         [SerializeField] private Transform _target = null;
         private Vector3 _targetPosition = new Vector3();
         [SerializeField] private float _followOrthographicSize;
-        public float FollowTransitionTime;
-        public AnimationCurve FollowAnimationCurve;
+        public float FollowTransitionSpeed;
 
         [Header("'MoveTo' State (MoveTo a Target Position and Hold)")]
         [SerializeField] private Vector3 _moveToTargetPosition;
         [SerializeField] private float _moveToOrthographicSize;
         public float MoveToTransitionTime;
-        public AnimationCurve MoveToAnimationCurve;
+        public AnimationCurve MoveToTimeCurve;
+        public AnimationCurve MoveToPositionCurve;
 
         private void Awake()
         {
@@ -48,9 +48,7 @@ namespace Nebula
             {
                 _targetPosition = _target.position;
                 _targetPosition.z = _defaultPosition.z;
-
-                if (_targetPosition.x != _lastSetTargetPosition.x || _targetPosition.y != _lastSetTargetPosition.y)
-                    MoveCamera(_targetPosition, _followOrthographicSize, this.FollowTransitionTime, this.FollowAnimationCurve);
+                LerpMove(_targetPosition, _followOrthographicSize, this.FollowTransitionSpeed);
             }
         }
 
@@ -64,10 +62,12 @@ namespace Nebula
             {
                 case CameraState2D.Follow:
                     if (!_target) break;
-                    MoveCamera(_targetPosition, _followOrthographicSize, this.FollowTransitionTime, this.FollowAnimationCurve);
+                    _targetPosition = _target.position;
+                    _targetPosition.z = _defaultPosition.z;
+                    LerpMove(_targetPosition, _followOrthographicSize, this.FollowTransitionSpeed);
                     break;
                 case CameraState2D.MoveTo:
-                    MoveCamera(_moveToTargetPosition, _moveToOrthographicSize, this.MoveToTransitionTime, this.MoveToAnimationCurve);
+                    MoveCamera(_moveToTargetPosition, _moveToOrthographicSize, this.MoveToTransitionTime, this.MoveToTimeCurve);
                     break;
                 default:
                     MoveCamera(_defaultPosition, _defaultOrthographicSize, _defaultTransitionTime, this.DefaultAnimationCurve);
@@ -75,13 +75,13 @@ namespace Nebula
             }
         }
 
-        public void Follow(Transform target, float followTransitionTime = 0.0f)
+        public void Follow(Transform target, float followTransitionSpeed = 0.0f)
         {
             _target = target;
             _targetPosition = _target.position;
             _targetPosition.z = _defaultPosition.z;
-            if (followTransitionTime > 0.0f)
-                this.FollowTransitionTime = followTransitionTime;
+            if (followTransitionSpeed > 0.0f)
+                this.FollowTransitionSpeed = followTransitionSpeed;
         }
 
         public void MoveCameraTo(Vector3 moveToTargetPosition, float moveToOrthographicSize, float moveToTransitionTime = 0.0f)
@@ -91,10 +91,16 @@ namespace Nebula
             if (moveToTransitionTime > 0.0f)
                 this.MoveToTransitionTime = moveToTransitionTime;
 
-            MoveCamera(_moveToTargetPosition, _moveToOrthographicSize, this.MoveToTransitionTime, this.MoveToAnimationCurve);
+            MoveCamera(_moveToTargetPosition, _moveToOrthographicSize, this.MoveToTransitionTime, this.MoveToTimeCurve);
         }
 
         public void Shake(float duration, float magnitude) { StartCoroutine(RandomShake(duration, magnitude)); }
+
+        private void LerpMove(Vector3 position, float size, float speed)
+        {
+            _camera.transform.position = Vector3.Lerp(_camera.transform.position, position, speed * Time.deltaTime);
+            _camera.orthographicSize = Mathf.Lerp(_camera.orthographicSize, size, speed * Time.deltaTime);
+        }
 
         private IEnumerator _movingCoroutine; // Keep Reference If Moving! Stop before starting new Move.
         private void MoveCamera(Vector3 targetPosition, float targetSize, float travelTime, AnimationCurve animationCurve)
@@ -114,6 +120,7 @@ namespace Nebula
 
             Vector3 startPosition = _camera.transform.position;
             float startSize = _camera.orthographicSize;
+            Vector3 moveDirection = (targetPosition - startPosition);
 
             float elapsedTime = 0.0f;
             float interpolationRatio = 0.0f;
@@ -122,7 +129,12 @@ namespace Nebula
             {
                 elapsedTime += Time.deltaTime; // I do this first so that on first frame we move.
                 interpolationRatio = elapsedTime / travelTime;
-                _camera.transform.position = Vector3.Lerp(startPosition, targetPosition, animationCurve.Evaluate(interpolationRatio));
+
+                if (_cameraState == CameraState2D.MoveTo)
+                    _camera.transform.position = startPosition + moveDirection * this.MoveToPositionCurve.Evaluate(animationCurve.Evaluate(interpolationRatio)); // animationCurve.Evaluate(interpolationRatio)
+                else
+                    _camera.transform.position = Vector3.Lerp(startPosition, targetPosition, animationCurve.Evaluate(interpolationRatio));
+
                 _camera.orthographicSize = Mathf.Lerp(startSize, targetSize, animationCurve.Evaluate(interpolationRatio));
                 yield return null;
             }
