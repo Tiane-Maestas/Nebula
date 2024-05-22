@@ -10,31 +10,36 @@ using System.Collections.Generic;
 
 namespace Nebula.Multiplayer
 {
-    // https://www.youtube.com/watch?v=-KDlEBfCBiU @ 23:47
+    // https://www.youtube.com/watch?v=-KDlEBfCBiU @ 40:00
     public class LobbyManager : Singleton<LobbyManager>
     {
-        private Lobby _hostLobby = null;
+        public Lobby Lobby { get; private set; } = null;
+        public float PollPeriod = 5.0f; // Update Lobby every 5 seconds. (Minimum is 1 time per second)
+        private NebulaTimer _updatePoll = new NebulaTimer();
         private NebulaTimer _heartBeat = new NebulaTimer();
+        private async void LobbyUpdatePoll()
+        {
+            if (this.Lobby == null) return;
+            this.Lobby = await LobbyService.Instance.GetLobbyAsync(this.Lobby.Id);
+        }
         private async void LobbyHeartbeat()
         {
-            if (_hostLobby == null) return;
-            await LobbyService.Instance.SendHeartbeatPingAsync(_hostLobby.Id);
+            if (this.Lobby == null) return;
+            await LobbyService.Instance.SendHeartbeatPingAsync(this.Lobby.Id);
         }
-        private void OnDestroy() { _heartBeat.Cancel(); }
+        // Heartbeat every 15 seconds. (30 second timeout w/ max of 5 pings per 30 seconds. https://docs.unity.com/ugs/manual/lobby/manual/rate-limits)
+        private void Start() { _updatePoll.SetInterval(LobbyUpdatePoll, PollPeriod); _heartBeat.SetInterval(LobbyHeartbeat, 15.0f); }
+        private void OnDestroy() { _updatePoll.Cancel(); _heartBeat.Cancel(); } // Todo: Check to make sure these stop when switching scenes and going to main menu!
 
         public async void CreateLobby(System.Action<Lobby> createLobbyCallback, string lobbyName, int maxPlayers, CreateLobbyOptions createLobbyOptions = null)
         {
             try
             {
                 Debug.Log("Creating lobby...");
-                Lobby createdLobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, createLobbyOptions);
+                this.Lobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, createLobbyOptions);
 
-                // Heartbeat every 15 seconds. (30 second timeout w/ max of 5 pings per 30 seconds. https://docs.unity.com/ugs/manual/lobby/manual/rate-limits)
-                _hostLobby = createdLobby;
-                _heartBeat.SetInterval(LobbyHeartbeat, 15.0f);
-
-                Debug.Log("Lobby Created as: " + createdLobby.Name + "(" + createdLobby.MaxPlayers + ")");
-                createLobbyCallback(createdLobby);
+                Debug.Log("Lobby Created as: " + this.Lobby.Name + "(" + this.Lobby.MaxPlayers + ")");
+                createLobbyCallback(this.Lobby);
             }
             catch (LobbyServiceException e)
             {
@@ -63,8 +68,8 @@ namespace Nebula.Multiplayer
             try
             {
                 Debug.LogFormat("Joining lobby {0}...", lobby.Name);
-                Lobby joinedLobby = await Lobbies.Instance.JoinLobbyByIdAsync(lobby.Id);
-                joinLobbyCallback(joinedLobby);
+                this.Lobby = await Lobbies.Instance.JoinLobbyByIdAsync(lobby.Id);
+                joinLobbyCallback(this.Lobby);
             }
             catch (LobbyServiceException e)
             {
@@ -78,8 +83,8 @@ namespace Nebula.Multiplayer
             try
             {
                 Debug.LogFormat("Joining private lobby {0}...", lobbyCode);
-                Lobby joinedLobby = await Lobbies.Instance.JoinLobbyByCodeAsync(lobbyCode);
-                joinLobbyCallback(joinedLobby);
+                this.Lobby = await Lobbies.Instance.JoinLobbyByCodeAsync(lobbyCode);
+                joinLobbyCallback(this.Lobby);
             }
             catch (LobbyServiceException e)
             {
@@ -93,13 +98,28 @@ namespace Nebula.Multiplayer
             try
             {
                 Debug.LogFormat("Looking to quick join lobby...");
-                Lobby joinedLobby = await LobbyService.Instance.QuickJoinLobbyAsync(quickJoinLobbyOptions);
-                joinLobbyCallback(joinedLobby);
+                this.Lobby = await LobbyService.Instance.QuickJoinLobbyAsync(quickJoinLobbyOptions);
+                joinLobbyCallback(this.Lobby);
             }
             catch (LobbyServiceException e)
             {
                 Debug.LogError(e);
                 joinLobbyCallback(null);
+            }
+        }
+
+        public async void UpdateLobby(System.Action<Lobby> updateLobbyCallback, Lobby lobby, UpdateLobbyOptions updateLobbyOptions)
+        {
+            try
+            {
+                Debug.LogFormat("Updating lobby...");
+                this.Lobby = await Lobbies.Instance.UpdateLobbyAsync(lobby.Id, updateLobbyOptions);
+                updateLobbyCallback(this.Lobby);
+            }
+            catch (LobbyServiceException e)
+            {
+                Debug.LogError(e);
+                updateLobbyCallback(null);
             }
         }
     }
