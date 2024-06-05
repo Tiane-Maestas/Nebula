@@ -1,4 +1,5 @@
 
+using Unity.Services.Authentication;
 using Unity.Services.Core;
 using Unity.Services.Lobbies;
 using Unity.Services.Lobbies.Models;
@@ -10,7 +11,7 @@ using System.Collections.Generic;
 
 namespace Nebula.Multiplayer
 {
-    // https://www.youtube.com/watch?v=-KDlEBfCBiU @ 40:00
+    // https://www.youtube.com/watch?v=-KDlEBfCBiU
     public class LobbyManager : Singleton<LobbyManager>
     {
         public Lobby Lobby { get; private set; } = null;
@@ -24,12 +25,31 @@ namespace Nebula.Multiplayer
         }
         private async void LobbyHeartbeat()
         {
-            if (this.Lobby == null) return;
+            if (this.Lobby == null || AuthenticationService.Instance.PlayerId != this.Lobby.HostId) return;
             await LobbyService.Instance.SendHeartbeatPingAsync(this.Lobby.Id);
         }
         // Heartbeat every 15 seconds. (30 second timeout w/ max of 5 pings per 30 seconds. https://docs.unity.com/ugs/manual/lobby/manual/rate-limits)
         private void Start() { _updatePoll.SetInterval(LobbyUpdatePoll, PollPeriod); _heartBeat.SetInterval(LobbyHeartbeat, 15.0f); }
-        private void OnDestroy() { _updatePoll.Cancel(); _heartBeat.Cancel(); } // Todo: Check to make sure these stop when switching scenes and going to main menu!
+        public async void Clear()
+        {
+            if (this.Lobby == null)
+                return;
+
+            _updatePoll.Cancel();
+            _heartBeat.Cancel();
+
+            try
+            {
+                await LobbyService.Instance.RemovePlayerAsync(this.Lobby.Id, AuthenticationService.Instance.PlayerId);
+            }
+            catch (LobbyServiceException e)
+            {
+                Debug.Log(e);
+            }
+
+            this.Lobby = null;
+        }
+        private void OnDestroy() { this.Clear(); }
 
         public async void CreateLobby(System.Action<Lobby> createLobbyCallback, string lobbyName, int maxPlayers, CreateLobbyOptions createLobbyOptions = null)
         {
@@ -108,18 +128,42 @@ namespace Nebula.Multiplayer
             }
         }
 
-        public async void UpdateLobby(System.Action<Lobby> updateLobbyCallback, Lobby lobby, UpdateLobbyOptions updateLobbyOptions)
+        public async void UpdateLobby(UpdateLobbyOptions updateLobbyOptions)
         {
             try
             {
                 Debug.LogFormat("Updating lobby...");
-                this.Lobby = await Lobbies.Instance.UpdateLobbyAsync(lobby.Id, updateLobbyOptions);
-                updateLobbyCallback(this.Lobby);
+                this.Lobby = await Lobbies.Instance.UpdateLobbyAsync(this.Lobby.Id, updateLobbyOptions);
             }
             catch (LobbyServiceException e)
             {
                 Debug.LogError(e);
-                updateLobbyCallback(null);
+            }
+        }
+
+        public async void UpdatePlayer(UpdatePlayerOptions updatePlayerOptions)
+        {
+            try
+            {
+                Debug.LogFormat("Updating player...");
+                this.Lobby = await Lobbies.Instance.UpdatePlayerAsync(this.Lobby.Id, AuthenticationService.Instance.PlayerId, updatePlayerOptions);
+            }
+            catch (LobbyServiceException e)
+            {
+                Debug.LogError(e);
+            }
+        }
+
+        public async void KickPlayer(string playerId)
+        {
+            try
+            {
+                Debug.LogFormat("Kicking player: " + playerId);
+                await LobbyService.Instance.RemovePlayerAsync(this.Lobby.Id, playerId);
+            }
+            catch (LobbyServiceException e)
+            {
+                Debug.LogError(e);
             }
         }
     }
