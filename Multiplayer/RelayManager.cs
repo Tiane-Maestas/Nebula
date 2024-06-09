@@ -24,7 +24,7 @@ namespace Nebula.Multiplayer
                 NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
                 NetworkManager.Singleton.StartHost();
 
-                Debug.Log(joinCode);
+                Debug.Log("Relay Join Code: " + joinCode);
                 joinCodeCallback(joinCode);
             }
             catch (RelayServiceException e)
