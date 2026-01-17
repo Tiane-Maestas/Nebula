@@ -9,10 +9,10 @@ namespace Nebula
     public struct StatBarText
     {
         public bool Visible;
-        public int FontSize;
+        public float FontSize;
         public enum Position { Left, Middle, Right };
         public Position Anchor;
-        public StatBarText(int fontSize = 2, Position anchor = StatBarText.Position.Left, bool visible = true)
+        public StatBarText(float fontSize = 2, Position anchor = StatBarText.Position.Left, bool visible = true)
         {
             Visible = visible;
             FontSize = fontSize;
