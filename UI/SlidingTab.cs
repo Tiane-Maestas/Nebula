@@ -39,19 +39,19 @@ namespace Nebula
             {
                 case SlidingDirections.Up:
                     if (_rectTransform.anchoredPosition.y < _finalAnchorXorY)
-                        _rectTransform.anchoredPosition += _animationSpeed * Vector2.up;
+                        _rectTransform.anchoredPosition += Time.deltaTime * _animationSpeed * Vector2.up;
                     break;
                 case SlidingDirections.Down:
                     if (_rectTransform.anchoredPosition.y > _finalAnchorXorY)
-                        _rectTransform.anchoredPosition += _animationSpeed * Vector2.down;
+                        _rectTransform.anchoredPosition += Time.deltaTime * _animationSpeed * Vector2.down;
                     break;
                 case SlidingDirections.Left:
                     if (_rectTransform.anchoredPosition.x > _finalAnchorXorY)
-                        _rectTransform.anchoredPosition += _animationSpeed * Vector2.left;
+                        _rectTransform.anchoredPosition += Time.deltaTime * _animationSpeed * Vector2.left;
                     break;
                 case SlidingDirections.Right:
                     if (_rectTransform.anchoredPosition.x < _finalAnchorXorY)
-                        _rectTransform.anchoredPosition += _animationSpeed * Vector2.right;
+                        _rectTransform.anchoredPosition += Time.deltaTime * _animationSpeed * Vector2.right;
                     break;
             }
         }
@@ -62,19 +62,19 @@ namespace Nebula
             {
                 case SlidingDirections.Up:
                     if (_rectTransform.anchoredPosition.y > _startAnchorXorY)
-                        _rectTransform.anchoredPosition += _animationSpeed * Vector2.down;
+                        _rectTransform.anchoredPosition += Time.deltaTime * _animationSpeed * Vector2.down;
                     break;
                 case SlidingDirections.Down:
                     if (_rectTransform.anchoredPosition.y < _startAnchorXorY)
-                        _rectTransform.anchoredPosition += _animationSpeed * Vector2.up;
+                        _rectTransform.anchoredPosition += Time.deltaTime * _animationSpeed * Vector2.up;
                     break;
                 case SlidingDirections.Left:
                     if (_rectTransform.anchoredPosition.x < _startAnchorXorY)
-                        _rectTransform.anchoredPosition += _animationSpeed * Vector2.right;
+                        _rectTransform.anchoredPosition += Time.deltaTime * _animationSpeed * Vector2.right;
                     break;
                 case SlidingDirections.Right:
                     if (_rectTransform.anchoredPosition.x > _startAnchorXorY)
-                        _rectTransform.anchoredPosition += _animationSpeed * Vector2.left;
+                        _rectTransform.anchoredPosition += Time.deltaTime * _animationSpeed * Vector2.left;
                     break;
             }
         }

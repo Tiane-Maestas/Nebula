@@ -33,7 +33,7 @@ namespace Nebula
             this.AddState(newState);
             _idleState = newState;
             _currentState = newState;
-            _currentState.Enter();
+            _currentState.Enter(_currentState.Id);
         }
 
         public void PerformStateAction()
@@ -84,9 +84,10 @@ namespace Nebula
 
         public void ChangeStateTo(GState newState)
         {
+            int fromStateId = _currentState.Id;
             _currentState.Leave();
             _currentState = newState;
-            _currentState.Enter();
+            _currentState.Enter(fromStateId);
             _stateRecentlyChanged = true;
         }
     }

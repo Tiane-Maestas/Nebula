@@ -14,7 +14,7 @@ namespace Nebula
         public delegate void DelegatedAction();
         private DelegatedAction _action;
 
-        public delegate void DelegatedEnter();
+        public delegate void DelegatedEnter(int fromStateId);
         private DelegatedEnter _enter;
 
         public delegate void DelegatedLeave();
@@ -44,11 +44,11 @@ namespace Nebula
             _update = update;
         }
 
-        public override void Enter()
+        public override void Enter(int fromStateId)
         {
-            base.Enter();
+            base.Enter(fromStateId);
             if (_enter == null) return; // Saftey Check. Not every component needs to be implemented.
-            _enter();
+            _enter(fromStateId);
         }
 
         public override void Leave()

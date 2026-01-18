@@ -35,7 +35,7 @@ namespace Nebula
             _animatorBoolName = animatorBoolName;
         }
 
-        public virtual void Enter()
+        public virtual void Enter(int fromStateId)
         {
             StartTime = Time.time;
             if (_animator != null)
