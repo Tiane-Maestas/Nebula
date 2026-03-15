@@ -10,7 +10,7 @@ namespace Nebula
 {
     public static class Utils
     {
-        public static void DisplayInfo(Transform transform, string message, float time = 0.0f, Vector3? offset = null, float floatRate = 0.0f) // Needs testing in 3D.
+        public static void DisplayInfo(Transform transform, string message, float time = 0.0f, Vector3? offset = null, float floatRate = 0.0f, float fontSize = 4.0f) // Needs testing in 3D.
         {
             // Create a canvas to put text onto at the transform passed in.
             GameObject canvasObject = new GameObject("Custom Canvas: " + message);
@@ -31,7 +31,7 @@ namespace Nebula
             text.GetComponent<RectTransform>().localPosition = Vector3.zero;
             text.autoSizeTextContainer = true;
             text.text = message;
-            text.fontSize = 4;
+            text.fontSize = fontSize;
             text.sortingOrder = 1;
 
             if (time == 0.0f)
