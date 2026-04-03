@@ -9,10 +9,10 @@ namespace Nebula
 public class PopupMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
 {
     [SerializeField] private GameObject _popupPrefab;
-    [SerializeField] private float _animationSpeed = 50f;
     [SerializeField] private Vector2 _targetOffset = Vector2.zero;
     [SerializeField] private Vector2 _cursorOffset = new Vector2(10f, 10f);
     [SerializeField] private float _hoverDelay = 0.25f;
+    [SerializeField] private string _defaultText = "";
 
     private static GameObject _popupInstance;
     private static RectTransform _popupRectTransform;
@@ -51,6 +51,8 @@ public class PopupMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
             _popupText = _popupInstance.GetComponentInChildren<TMP_Text>();
             _popupInstance.SetActive(false);
         }
+
+        _localPopupText = _defaultText;
     }
 
     private void LateUpdate()
