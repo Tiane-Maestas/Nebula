@@ -10,7 +10,8 @@ namespace Nebula
 {
     public static class Utils
     {
-        public static void DisplayInfo(Transform transform, string message, float time = 0.0f, Vector3? offset = null, float floatRate = 0.0f, float fontSize = 4.0f) // Needs testing in 3D.
+        // Needs testing in 3D.
+        public static void DisplayInfo(Transform transform, string message, float time = 0.0f, Vector3? offset = null, Vector3? rotation = null, float velocity = 0.0f, Vector3? velocityRotation = null, float fontSize = 4.0f) 
         {
             // Create a canvas to put text onto at the transform passed in.
             GameObject canvasObject = new GameObject("Custom Canvas: " + message);
@@ -37,12 +38,17 @@ namespace Nebula
             if (time == 0.0f)
                 time = Time.fixedDeltaTime; // Destroy it after 1 physics call. 
 
-            if (floatRate != 0.0f)
+            if (velocity != 0.0f)
             {
                 Rigidbody canvasBody = canvasObject.AddComponent<Rigidbody>();
                 canvasBody.useGravity = false;
-                canvasBody.velocity = new Vector3(0, floatRate, 0);
+                canvasBody.velocity = new Vector3(0, velocity, 0);
+                if(velocityRotation != null)
+                    canvasBody.velocity = RotateVector3ByDegInWorldCoordinates(new Vector3(0, velocity, 0), (Vector3)velocityRotation);
             }
+
+            if (rotation != null)
+                canvasObject.transform.rotation = Quaternion.Euler((Vector3)rotation);
 
             GameObject.Destroy(canvasObject, time);
         }
