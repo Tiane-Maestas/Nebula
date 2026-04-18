@@ -17,9 +17,10 @@ public class PopupMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
     private static GameObject _popupInstance;
     private static RectTransform _popupRectTransform;
     private static TMP_Text _popupText;
-    private static Coroutine _hoverWaitCoroutine;
     private static Canvas _parentCanvas;
+    private static PopupMenu _activeInstance;
 
+    private Coroutine _hoverWaitCoroutine;
     private string _localPopupText;
 
     void Awake()
@@ -64,23 +65,46 @@ public class PopupMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
         }
     }
 
+    private void OnDisable()
+    {
+        if (_activeInstance == this)
+        {
+            StopHover();
+            if (_popupInstance != null) _popupInstance.SetActive(false);
+            _activeInstance = null;
+        }
+    }
+
     public void SetPopupText(string text) { _localPopupText = text; }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (_activeInstance != null && _activeInstance != this) return;
+
+        // Ensure we are the topmost object (the one the raycast actually hit).
+        // If something else is in front of us, don't claim the lock.
+        GameObject hit = eventData.pointerCurrentRaycast.gameObject;
+        if (hit != gameObject && (hit == null || !hit.transform.IsChildOf(transform))) return;
+
+        _activeInstance = this;
         ResetHoverTimer(eventData.position);
     }
 
     public void OnPointerMove(PointerEventData eventData)
     {
+        if (_activeInstance != this) return;
         if (_popupInstance.activeSelf) return;
         ResetHoverTimer(eventData.position);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        StopHover();
-        _popupInstance.SetActive(false);
+        if (_activeInstance == this)
+        {
+            StopHover();
+            _popupInstance.SetActive(false);
+            _activeInstance = null;
+        }
     }
 
     private void ResetHoverTimer(Vector2 mousePosition)
