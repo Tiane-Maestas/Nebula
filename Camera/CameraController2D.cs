@@ -52,6 +52,22 @@ namespace Nebula
             }
         }
 
+        public Vector3 DefaultPosition => _defaultPosition;
+        public float DefaultOrthographicSize => _defaultOrthographicSize;
+
+        public void SnapToDefault()
+        {
+            if (_moving && _movingCoroutine != null)
+                StopCoroutine(_movingCoroutine);
+            _moving = false;
+            _cameraState = CameraState2D.Default;
+            if (_camera != null)
+            {
+                _camera.transform.position = _defaultPosition;
+                _camera.orthographicSize = _defaultOrthographicSize;
+            }
+        }
+
         public void ChangeState(CameraState2D cameraState)
         {
             if (_cameraState == cameraState)
