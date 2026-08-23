@@ -53,30 +53,40 @@ namespace Nebula
             }
 
             // Handle Transitions
-            // Only check the states that are allowed transitions from the current state.
+            // Check all allowed transitions from the current state and pick the one with the highest priority.
+            GState bestState = null;
+            bool currentValid = _currentState.Condition();
+
             foreach (int stateId in _currentState.AllowedTransitions)
             {
                 GState queryState = _states[stateId];
                 if (queryState.Condition())
                 {
-                    if (!_currentState.Condition())
+                    // If the current state is valid, only higher priority states can interrupt.
+                    // If the current state is invalid, pick the highest priority allowed transition.
+                    if (!currentValid || queryState.Priority > _currentState.Priority)
                     {
-                        ChangeStateTo(queryState);
-                    }
-                    else if (queryState.Priority > _currentState.Priority)
-                    {
-                        // Only use priorities if both state conditions are true.
-                        ChangeStateTo(queryState);
+                        if (bestState == null || queryState.Priority > bestState.Priority)
+                        {
+                            bestState = queryState;
+                        }
                     }
                 }
             }
 
-            // Finally, if no transition state condition is met and the current state condition
-            // isn't met set, then change current state to the idle state.
-            // (Maybe make this gradually go back using a graph at somepoint.)
-            if (!_currentState.Condition())
+            // Transition to the best valid state found.
+            // If none of that is true, don't change states.
+            if (bestState != null)
             {
-                ChangeStateTo(_idleState); // More of a fail safe currently.
+                ChangeStateTo(bestState);
+                return _currentState.Id;
+            }
+
+            // If the current state condition is no longer met, but no allowed transitions are active yet,
+            // remain in the current state until a valid transition condition becomes true.
+            if (!currentValid)
+            {
+                Debug.LogError($"[GStateMachine] Current state '{_currentState.Name}' (ID: {_currentState.Id}) condition is false, but no valid transition conditions are met. Staying in current state.");
             }
 
             return _currentState.Id;

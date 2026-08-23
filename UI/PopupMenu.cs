@@ -58,6 +58,15 @@ public class PopupMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
 
     private void LateUpdate()
     {
+        // Hide and cancel popup if player is holding left click down
+        if (Input.GetMouseButton(0))
+        {
+            if (_popupInstance != null && _popupInstance.activeSelf)
+                _popupInstance.SetActive(false);
+            StopHover();
+            return;
+        }
+
         // If the popup is active, ensure it stays upright regardless of the parent's rotation
         if (_popupInstance != null && _popupInstance.activeSelf)
         {
@@ -79,6 +88,7 @@ public class PopupMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (Input.GetMouseButton(0)) return;
         if (_activeInstance != null && _activeInstance != this) return;
 
         // Ensure we are the topmost object (the one the raycast actually hit).
@@ -92,6 +102,14 @@ public class PopupMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
 
     public void OnPointerMove(PointerEventData eventData)
     {
+        if (Input.GetMouseButton(0))
+        {
+            if (_popupInstance != null && _popupInstance.activeSelf)
+                _popupInstance.SetActive(false);
+            StopHover();
+            return;
+        }
+
         if (_activeInstance != this) return;
         if (_popupInstance.activeSelf) return;
         ResetHoverTimer(eventData.position);
@@ -121,6 +139,8 @@ public class PopupMenu : MonoBehaviour, IPointerEnterHandler, IPointerExitHandle
     private IEnumerator WaitToShow()
     {
         yield return new WaitForSeconds(_hoverDelay);
+
+        if (Input.GetMouseButton(0)) yield break;
 
         Vector2 currentMousePos = Input.mousePosition;
 
