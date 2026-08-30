@@ -11,18 +11,16 @@ namespace Nebula
     public static class Utils
     {
         // Needs testing in 3D.
-        public static void DisplayInfo(Transform transform, string message, float time = 0.0f, Vector3? offset = null, Vector3? rotation = null, float velocity = 0.0f, Vector3? velocityRotation = null, float fontSize = 4.0f) 
+        public static void DisplayInfo(Transform transform, string message, float time = 0.0f, Vector3? offset = null, Vector3? rotation = null, float velocity = 0.0f, Vector3? velocityRotation = null, float fontSize = 4.0f, Color? color = null, TMP_FontAsset font = null) 
         {
             // Create a canvas to put text onto at the transform passed in.
             GameObject canvasObject = new GameObject("Custom Canvas: " + message);
             canvasObject.transform.SetParent(transform);
+            canvasObject.transform.localPosition = (offset != null) ? (Vector3)offset : Vector3.zero;
 
             Canvas textCanvas = canvasObject.AddComponent<Canvas>();
-            textCanvas.GetComponent<RectTransform>().localPosition = Vector3.zero;
             textCanvas.renderMode = RenderMode.WorldSpace;
             textCanvas.worldCamera = Camera.main;
-            if (offset != null)
-                textCanvas.gameObject.transform.position += (Vector3)offset;
 
             // Create text and place it in the canvas.
             GameObject textObject = new GameObject("Custom Text: " + message);
@@ -30,10 +28,15 @@ namespace Nebula
 
             TextMeshPro text = textObject.AddComponent<TextMeshPro>();
             text.GetComponent<RectTransform>().localPosition = Vector3.zero;
+            text.alignment = TextAlignmentOptions.Center;
             text.autoSizeTextContainer = true;
             text.text = message;
             text.fontSize = fontSize;
             text.sortingOrder = 1;
+            if (color.HasValue)
+                text.color = color.Value;
+            if (font != null)
+                text.font = font;
 
             if (time == 0.0f)
                 time = Time.fixedDeltaTime; // Destroy it after 1 physics call. 
