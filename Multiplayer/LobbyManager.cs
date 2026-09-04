@@ -15,40 +15,100 @@ namespace Nebula.Multiplayer
     public class LobbyManager : Singleton<LobbyManager>
     {
         public Lobby Lobby { get; private set; } = null;
-        public float PollPeriod = 5.0f; // Update Lobby every 5 seconds. (Minimum is 1 time per second)
-        private NebulaTimer _updatePoll = new NebulaTimer();
-        private NebulaTimer _heartBeat = new NebulaTimer();
-        private async void LobbyUpdatePoll()
+        public float PollPeriod = 1.5f; // Update Lobby every 1.5 seconds. (Minimum is 1 time per second)
+        
+        private float _pollTimer = 0f;
+        private float _heartbeatTimer = 0f;
+        private bool _isPolling = false;
+        private bool _isHeartbeating = false;
+
+        private void Update()
         {
             if (this.Lobby == null) return;
-            this.Lobby = await LobbyService.Instance.GetLobbyAsync(this.Lobby.Id);
-        }
-        private async void LobbyHeartbeat()
-        {
-            if (this.Lobby == null || AuthenticationService.Instance.PlayerId != this.Lobby.HostId) return;
-            await LobbyService.Instance.SendHeartbeatPingAsync(this.Lobby.Id);
-        }
-        // Heartbeat every 15 seconds. (30 second timeout w/ max of 5 pings per 30 seconds. https://docs.unity.com/ugs/manual/lobby/manual/rate-limits)
-        private void Start() { _updatePoll.SetInterval(LobbyUpdatePoll, PollPeriod); _heartBeat.SetInterval(LobbyHeartbeat, 15.0f); }
-        public async void Clear()
-        {
-            if (this.Lobby == null)
-                return;
 
-            _updatePoll.Cancel();
-            _heartBeat.Cancel();
+            _pollTimer += Time.deltaTime;
+            if (_pollTimer >= PollPeriod)
+            {
+                _pollTimer = 0f;
+                LobbyUpdatePoll();
+            }
 
+            // Heartbeat every 15 seconds. (30 second timeout w/ max of 5 pings per 30 seconds. https://docs.unity.com/ugs/manual/lobby/manual/rate-limits)
+            if (AuthenticationService.Instance.IsSignedIn && AuthenticationService.Instance.PlayerId == this.Lobby.HostId)
+            {
+                _heartbeatTimer += Time.deltaTime;
+                if (_heartbeatTimer >= 15.0f)
+                {
+                    _heartbeatTimer = 0f;
+                    LobbyHeartbeat();
+                }
+            }
+        }
+
+        private async void LobbyUpdatePoll()
+        {
+            if (this.Lobby == null || _isPolling) return;
+            _isPolling = true;
             try
             {
-                await LobbyService.Instance.RemovePlayerAsync(this.Lobby.Id, AuthenticationService.Instance.PlayerId);
+                this.Lobby = await LobbyService.Instance.GetLobbyAsync(this.Lobby.Id);
             }
             catch (LobbyServiceException e)
             {
                 Debug.Log(e);
             }
-
-            this.Lobby = null;
+            finally
+            {
+                _isPolling = false;
+            }
         }
+
+        private async void LobbyHeartbeat()
+        {
+            if (this.Lobby == null || !AuthenticationService.Instance.IsSignedIn || AuthenticationService.Instance.PlayerId != this.Lobby.HostId || _isHeartbeating) return;
+            _isHeartbeating = true;
+            try
+            {
+                await LobbyService.Instance.SendHeartbeatPingAsync(this.Lobby.Id);
+            }
+            catch (LobbyServiceException e)
+            {
+                Debug.Log(e);
+            }
+            finally
+            {
+                _isHeartbeating = false;
+            }
+        }
+
+        public async void Clear()
+        {
+            if (this.Lobby == null)
+                return;
+
+            string lobbyId = this.Lobby.Id;
+            bool isHost = AuthenticationService.Instance.IsSignedIn && AuthenticationService.Instance.PlayerId == this.Lobby.HostId;
+            this.Lobby = null;
+            _pollTimer = 0f;
+            _heartbeatTimer = 0f;
+
+            try
+            {
+                if (isHost)
+                {
+                    await LobbyService.Instance.DeleteLobbyAsync(lobbyId);
+                }
+                else
+                {
+                    await LobbyService.Instance.RemovePlayerAsync(lobbyId, AuthenticationService.Instance.PlayerId);
+                }
+            }
+            catch (LobbyServiceException e)
+            {
+                Debug.Log(e);
+            }
+        }
+
         private void OnDestroy() { this.Clear(); }
 
         public async void CreateLobby(System.Action<Lobby> createLobbyCallback, string lobbyName, int maxPlayers, CreateLobbyOptions createLobbyOptions = null)
