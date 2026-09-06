@@ -49,6 +49,8 @@ namespace Nebula
         private static Vector3 defaultSoundPosition = new Vector3(0, 0, 0);
 
         // Global volume controls.
+        public static float masterVolume = 1f;
+        public static bool isMuted = false;
         public static float[] volumeMultipliers = { 1, 1, 1, 1, 1 };
 
         // Ambient Sounds must be handled uniquely.
@@ -357,6 +359,43 @@ namespace Nebula
         {
             char[] numbers = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
             return name.Trim(numbers);
+        }
+
+        public static void UpdateActiveAudioVolumes()
+        {
+            foreach (var kvp in audioPlayers)
+            {
+                if (kvp.Value == null) continue;
+                string key = kvp.Key;
+                bool isAmbient = key.Contains('*');
+                string baseName = isAmbient ? AmbientBaseName(key) : key;
+                if (sounds.ContainsKey(baseName))
+                {
+                    kvp.Value.volume = sounds[baseName].volume * volumeMultipliers[(int)sounds[baseName].type];
+                }
+            }
+        }
+
+        public static void SetVolumeMultiplier(SoundType type, float multiplier)
+        {
+            int index = (int)type;
+            if (index >= 0 && index < volumeMultipliers.Length)
+            {
+                volumeMultipliers[index] = multiplier;
+                UpdateActiveAudioVolumes();
+            }
+        }
+
+        public static void SetMasterVolume(float volume)
+        {
+            masterVolume = Mathf.Clamp01(volume);
+            AudioListener.volume = isMuted ? 0f : masterVolume;
+        }
+
+        public static void SetMute(bool mute)
+        {
+            isMuted = mute;
+            AudioListener.pause = isMuted;
         }
     }
 }
