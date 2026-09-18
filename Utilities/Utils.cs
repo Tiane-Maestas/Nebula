@@ -11,7 +11,7 @@ namespace Nebula
     public static class Utils
     {
         // Needs testing in 3D.
-        public static void DisplayInfo(Transform transform, string message, float time = 0.0f, Vector3? offset = null, Vector3? rotation = null, float velocity = 0.0f, Vector3? velocityRotation = null, float fontSize = 4.0f, Color? color = null, TMP_FontAsset font = null) 
+        public static GameObject DisplayInfo(Transform transform, string message, float time = 0.0f, Vector3? offset = null, Vector3? rotation = null, Vector3? velocity = null, float fontSize = 4.0f, Color? color = null, TMP_FontAsset font = null) 
         {
             // Create a canvas to put text onto at the transform passed in.
             GameObject canvasObject = new GameObject("Custom Canvas: " + message);
@@ -29,6 +29,7 @@ namespace Nebula
             TextMeshPro text = textObject.AddComponent<TextMeshPro>();
             text.GetComponent<RectTransform>().localPosition = Vector3.zero;
             text.alignment = TextAlignmentOptions.Center;
+            text.enableWordWrapping = false;
             text.autoSizeTextContainer = true;
             text.text = message;
             text.fontSize = fontSize;
@@ -38,22 +39,21 @@ namespace Nebula
             if (font != null)
                 text.font = font;
 
-            if (time == 0.0f)
-                time = Time.fixedDeltaTime; // Destroy it after 1 physics call. 
-
-            if (velocity != 0.0f)
+            if (velocity.HasValue && velocity.Value != Vector3.zero)
             {
                 Rigidbody canvasBody = canvasObject.AddComponent<Rigidbody>();
                 canvasBody.useGravity = false;
-                canvasBody.velocity = new Vector3(0, velocity, 0);
-                if(velocityRotation != null)
-                    canvasBody.velocity = RotateVector3ByDegInWorldCoordinates(new Vector3(0, velocity, 0), (Vector3)velocityRotation);
+                canvasBody.velocity = velocity.Value;
             }
 
             if (rotation != null)
                 canvasObject.transform.rotation = Quaternion.Euler((Vector3)rotation);
 
+            if (time == 0.0f)
+                time = Time.fixedDeltaTime; // Destroy it after 1 physics call.
+
             GameObject.Destroy(canvasObject, time);
+            return canvasObject;
         }
 
         public static Vector3 RotateVector3ByDegInWorldCoordinates(Vector3 vector, Vector3 angles)
