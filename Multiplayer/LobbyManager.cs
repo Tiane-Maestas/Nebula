@@ -55,7 +55,9 @@ namespace Nebula.Multiplayer
             }
             catch (LobbyServiceException e)
             {
-                Debug.Log(e);
+                Debug.LogError(e);
+                if (e.Reason == LobbyExceptionReason.LobbyNotFound)
+                    this.Lobby = null;
             }
             finally
             {
@@ -73,7 +75,9 @@ namespace Nebula.Multiplayer
             }
             catch (LobbyServiceException e)
             {
-                Debug.Log(e);
+                Debug.LogError(e);
+                if (e.Reason == LobbyExceptionReason.LobbyNotFound)
+                    this.Lobby = null;
             }
             finally
             {
@@ -81,32 +85,79 @@ namespace Nebula.Multiplayer
             }
         }
 
-        public async void Clear()
+        public async Task LeaveLobbyAsync()
         {
-            if (this.Lobby == null)
-                return;
+            string lobbyId = this.Lobby?.Id;
+            bool isHost = this.Lobby != null && AuthenticationService.Instance.IsSignedIn && AuthenticationService.Instance.PlayerId == this.Lobby.HostId;
+            string playerId = AuthenticationService.Instance.IsSignedIn ? AuthenticationService.Instance.PlayerId : null;
 
-            string lobbyId = this.Lobby.Id;
-            bool isHost = AuthenticationService.Instance.IsSignedIn && AuthenticationService.Instance.PlayerId == this.Lobby.HostId;
             this.Lobby = null;
             _pollTimer = 0f;
             _heartbeatTimer = 0f;
 
+            if (string.IsNullOrEmpty(playerId))
+                return;
+
+            await DeleteOrLeaveLobby(lobbyId, playerId, isHost);
+            await CleanupStaleJoinedLobbies(playerId);
+        }
+
+        private async Task DeleteOrLeaveLobby(string lobbyId, string playerId, bool isHost)
+        {
             try
             {
                 if (isHost)
                 {
+                    Debug.LogFormat("[LobbyManager] Deleting lobby {0} as host.", lobbyId);
                     await LobbyService.Instance.DeleteLobbyAsync(lobbyId);
+                    return;
                 }
-                else
-                {
-                    await LobbyService.Instance.RemovePlayerAsync(lobbyId, AuthenticationService.Instance.PlayerId);
-                }
+
+                Debug.LogFormat("[LobbyManager] Removing player {0} from lobby {1}.", playerId, lobbyId);
+                await LobbyService.Instance.RemovePlayerAsync(lobbyId, playerId);
             }
             catch (LobbyServiceException e)
             {
-                Debug.Log(e);
+                Debug.LogWarning($"[LobbyManager] Error leaving lobby {lobbyId}: {e.Reason}");
             }
+        }
+
+        private async Task CleanupStaleJoinedLobbies(string playerId)
+        {
+            List<string> joinedLobbies;
+            try
+            {
+                joinedLobbies = await LobbyService.Instance.GetJoinedLobbiesAsync();
+            }
+            catch (LobbyServiceException e)
+            {
+                Debug.LogWarning($"[LobbyManager] Error checking joined lobbies: {e.Message}");
+                return;
+            }
+
+            if (joinedLobbies == null || joinedLobbies.Count == 0)
+                return;
+
+            foreach (string id in joinedLobbies)
+            {
+                if (string.IsNullOrEmpty(id))
+                    continue;
+
+                try
+                {
+                    Debug.LogFormat("[LobbyManager] Cleaning up stale joined lobby {0} for player {1}.", id, playerId);
+                    await LobbyService.Instance.RemovePlayerAsync(id, playerId);
+                }
+                catch (LobbyServiceException e)
+                {
+                    Debug.LogWarning($"[LobbyManager] Error removing player from stale joined lobby {id}: {e.Reason}");
+                }
+            }
+        }
+
+        public async void Clear()
+        {
+            await LeaveLobbyAsync();
         }
 
         private void OnDestroy() { this.Clear(); }
@@ -115,6 +166,9 @@ namespace Nebula.Multiplayer
         {
             try
             {
+                if (this.Lobby != null)
+                    await LeaveLobbyAsync();
+
                 Debug.Log("Creating lobby...");
                 this.Lobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, maxPlayers, createLobbyOptions);
 
@@ -147,6 +201,9 @@ namespace Nebula.Multiplayer
         {
             try
             {
+                if (this.Lobby != null)
+                    await LeaveLobbyAsync();
+
                 Debug.LogFormat("Joining lobby {0}...", lobby.Name);
                 this.Lobby = await Lobbies.Instance.JoinLobbyByIdAsync(lobby.Id);
                 joinLobbyCallback(this.Lobby);
@@ -162,6 +219,9 @@ namespace Nebula.Multiplayer
         {
             try
             {
+                if (this.Lobby != null)
+                    await LeaveLobbyAsync();
+
                 Debug.LogFormat("Joining private lobby {0}...", lobbyCode);
                 this.Lobby = await Lobbies.Instance.JoinLobbyByCodeAsync(lobbyCode);
                 joinLobbyCallback(this.Lobby);
@@ -177,6 +237,9 @@ namespace Nebula.Multiplayer
         {
             try
             {
+                if (this.Lobby != null)
+                    await LeaveLobbyAsync();
+
                 Debug.LogFormat("Looking to quick join lobby...");
                 this.Lobby = await LobbyService.Instance.QuickJoinLobbyAsync(quickJoinLobbyOptions);
                 joinLobbyCallback(this.Lobby);
@@ -190,6 +253,9 @@ namespace Nebula.Multiplayer
 
         public async void UpdateLobby(UpdateLobbyOptions updateLobbyOptions)
         {
+            if (this.Lobby == null)
+                return;
+
             try
             {
                 Debug.LogFormat("Updating lobby...");
@@ -203,6 +269,9 @@ namespace Nebula.Multiplayer
 
         public async void UpdatePlayer(UpdatePlayerOptions updatePlayerOptions)
         {
+            if (this.Lobby == null || !AuthenticationService.Instance.IsSignedIn)
+                return;
+
             try
             {
                 Debug.LogFormat("Updating player...");
@@ -216,6 +285,9 @@ namespace Nebula.Multiplayer
 
         public async void KickPlayer(string playerId)
         {
+            if (this.Lobby == null || string.IsNullOrEmpty(playerId))
+                return;
+
             try
             {
                 Debug.LogFormat("Kicking player: " + playerId);

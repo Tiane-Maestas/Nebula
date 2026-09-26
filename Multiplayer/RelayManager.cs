@@ -12,10 +12,25 @@ namespace Nebula.Multiplayer
 {
     public class RelayManager : Singleton<RelayManager>
     {
+        public void LeaveRelay()
+        {
+            if (NetworkManager.Singleton != null && (NetworkManager.Singleton.IsListening || NetworkManager.Singleton.IsClient || NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsHost))
+            {
+                NetworkManager.Singleton.Shutdown();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            LeaveRelay();
+        }
+
         public async void CreateRelay(System.Action<string> joinCodeCallback)
         {
             try
             {
+                LeaveRelay();
+
                 Allocation allocation = await RelayService.Instance.CreateAllocationAsync(1); // 2 Max Players. (For Now)
 
                 string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
@@ -29,14 +44,23 @@ namespace Nebula.Multiplayer
             }
             catch (RelayServiceException e)
             {
-                Debug.Log(e);
+                Debug.LogError(e);
+                joinCodeCallback(null);
             }
         }
 
         public async void JoinRelay(string joinCode)
         {
+            if (string.IsNullOrEmpty(joinCode))
+            {
+                Debug.LogError("[RelayManager] Cannot join Relay with null or empty join code.");
+                return;
+            }
+
             try
             {
+                LeaveRelay();
+
                 JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
 
                 RelayServerData relayServerData = new RelayServerData(joinAllocation, "dtls");
@@ -45,7 +69,7 @@ namespace Nebula.Multiplayer
             }
             catch (RelayServiceException e)
             {
-                Debug.Log(e);
+                Debug.LogError(e);
             }
         }
     }
