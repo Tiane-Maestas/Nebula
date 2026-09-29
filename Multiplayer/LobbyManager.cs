@@ -104,6 +104,9 @@ namespace Nebula.Multiplayer
 
         private async Task DeleteOrLeaveLobby(string lobbyId, string playerId, bool isHost)
         {
+            if (string.IsNullOrEmpty(lobbyId))
+                return;
+
             try
             {
                 if (isHost)
@@ -120,6 +123,10 @@ namespace Nebula.Multiplayer
             {
                 Debug.LogWarning($"[LobbyManager] Error leaving lobby {lobbyId}: {e.Reason}");
             }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[LobbyManager] Unexpected error leaving lobby {lobbyId}: {e.Message}");
+            }
         }
 
         private async Task CleanupStaleJoinedLobbies(string playerId)
@@ -132,6 +139,11 @@ namespace Nebula.Multiplayer
             catch (LobbyServiceException e)
             {
                 Debug.LogWarning($"[LobbyManager] Error checking joined lobbies: {e.Message}");
+                return;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[LobbyManager] Unexpected error checking joined lobbies: {e.Message}");
                 return;
             }
 
@@ -151,6 +163,10 @@ namespace Nebula.Multiplayer
                 catch (LobbyServiceException e)
                 {
                     Debug.LogWarning($"[LobbyManager] Error removing player from stale joined lobby {id}: {e.Reason}");
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"[LobbyManager] Unexpected error removing player from stale joined lobby {id}: {e.Message}");
                 }
             }
         }
